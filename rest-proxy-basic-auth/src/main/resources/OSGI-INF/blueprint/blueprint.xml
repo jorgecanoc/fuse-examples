@@ -8,7 +8,7 @@
   <bean class="org.apache.camel.component.servlet.osgi.OsgiServletRegisterer"
         init-method="register"
         destroy-method="unregister">
-    <property name="alias" value="/rest-proxy"/>
+    <property name="alias" value="/business-central"/>
     <property name="httpService" ref="httpService"/>
     <property name="servlet" ref="camelServlet"/>
   </bean>
@@ -16,34 +16,56 @@
   <bean id="camelServlet" class="org.apache.camel.component.servlet.CamelHttpTransportServlet"/>
     
     <camelContext id="camelContext-aa5b394f-363e-4f92-afe6-27d93492eab5" xmlns="http://camel.apache.org/schema/blueprint">
-        <restConfiguration bindingMode="auto" component="servlet"/>
-        <rest path="/say">
-            <get uri="/call">
-                <to uri="direct:call"/>
-            </get>
-            <get uri="/hello">
-                <to uri="direct:hello"/>
-            </get>
-            <get consumes="application/json" uri="/bye">
-                <to uri="direct:bye"/>
-            </get>
-        </rest>
-        <route id="_hello">
-            <from id="_from2" uri="direct:hello"/>
-            <transform id="_helloworld">
-                <constant>Hello World</constant>
-            </transform>
-        </route>
-        <route id="_bye">
-            <from id="_from3" uri="direct:bye"/>
-            <transform id="_byeworld">
-                <constant>Bye World</constant>
-            </transform>
-        </route>
-        <route id="_callToProxy">
-            <!-- from id="_from1" uri="timer:foo?period=5000"/> -->
-            <from id="_from1" uri="direct:call"/>
-            <to id="_http4" uri="http4://jbpm.kaf.com.mx:8080/kie-server/services/rest/server?bridgeEndpoint=true&amp;throwExceptionOnFailure=false&amp;authUsername=bpms&amp;authPassword=KAF_bpm2016*"/>
-        </route>
+		<restConfiguration bindingMode="auto" component="servlet"/>
+		<rest path="/rest" produces="application/json">
+			<get uri="/repositories">
+				<to uri="direct:repositories" />
+			</get>
+			<get uri="/query/runtime/task">
+				<to uri="direct:queryTask" />
+			</get>
+			<post uri="/runtime/${deploymentId}/withvars/process/${procDefID}/start">
+				<to uri="direct:runtimeWithVars" />
+			</post>
+			<post uri="/task/${taskId}/claim">
+				<to uri="direct:taskClaim" />
+			</post>
+			<post uri="/task/${taskId}/complete">
+				<to uri="direct:taskComplete" />
+			</post>
+			<post uri="/task/${taskId}/start">
+				<to uri="direct:taskStart" />
+			</post>
+		</rest>
+		<route id="reposRoute">
+			<from id="_from1" uri="direct:repositories" />
+			<to id="1_http4"
+				uri="http4://jbpm.kaf.com.mx:8080//business-central/rest/repositories?bridgeEndpoint=true&amp;throwExceptionOnFailure=false&amp;authUsername=bpms&amp;authPassword=KAF_bpm2016*" />
+		</route>
+		<route id="queryTask">
+			<from id="_from2" uri="direct:queryTask" />
+			<to id="2_http4"
+				uri="http4://jbpm.kaf.com.mx:8080//business-central/rest/query/runtime/task?bridgeEndpoint=true&amp;throwExceptionOnFailure=false&amp;authUsername=bpms&amp;authPassword=KAF_bpm2016*" />
+		</route>
+		<route id="runtimeWithVars">
+			<from id="_from3" uri="direct:runtimeWithVars" />
+			<to id="3_http4"
+				uri="http4://jbpm.kaf.com.mx:8080//business-central/rest/runtime/${deploymentId}/withvars/process/${procDefID}/start?bridgeEndpoint=true&amp;throwExceptionOnFailure=false&amp;authUsername=bpms&amp;authPassword=KAF_bpm2016*" />
+		</route>
+		<route id="taskClaim">
+			<from id="_from4" uri="direct:taskClaim" />
+			<to id="4_http4"
+				uri="http4://jbpm.kaf.com.mx:8080//business-central/rest/task/${taskId}/claim?bridgeEndpoint=true&amp;throwExceptionOnFailure=false&amp;authUsername=bpms&amp;authPassword=KAF_bpm2016*" />
+		</route>
+		<route id="taskComplete">
+			<from id="_from5" uri="direct:taskComplete" />
+			<to id="5_http4"
+				uri="http4://jbpm.kaf.com.mx:8080//business-central/rest/task/${taskId}/complete?bridgeEndpoint=true&amp;throwExceptionOnFailure=false&amp;authUsername=bpms&amp;authPassword=KAF_bpm2016*" />
+		</route>
+		<route id="taskStart">
+			<from id="_from6" uri="direct:taskStart" />
+			<to id="6_http4"
+				uri="http4://jbpm.kaf.com.mx:8080//business-central/rest/task/${taskId}/start?bridgeEndpoint=true&amp;throwExceptionOnFailure=false&amp;authUsername=bpms&amp;authPassword=KAF_bpm2016*" />
+		</route>
     </camelContext>
 </blueprint>
